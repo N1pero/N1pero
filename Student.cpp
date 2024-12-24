@@ -1,186 +1,112 @@
 #include "Student.h"
-
-Student::Student()
-{
-
-	cout << "Student" << endl;
-	cout << "Enter student details:" << endl;
-	try
-	{
-
-		setType(1);
-
-		cin.ignore(256, '\n');
-		cout << "Surname: ";
-		getline(cin, this->surename);
-		cout << "First name: ";
-		getline(cin, this->name);
-		cout << "Middle name: ";
-		getline(cin, this->patronim);
-		cout << "Major: ";
-		getline(cin, this->specialtyName);
-
-		cout << "Group: ";
-		cin >> this->group;
-
-		cout << "Year: ";
-		cin >> this->year;
-
-		cout << "Average grade: ";
-		cin >> this->score;
-
-		setError(false);
+#include "Exceptions.h"
+// Default constructor
+Student::Student() : surname("Unknown"), grades(nullptr), gradesCount(0) {
+	cout << "Called default constructor for Student: " << this << "\n";
+}
+// Constructor with parameters
+Student::Student(const string& surname, const float* grades, int gradesCount)
+	: surname(surname), gradesCount(gradesCount) {
+	if (gradesCount <= 0) {
+		throw StudentException("Incorrect number of grades!");
+	}
+	this->grades = new float[gradesCount];
+	for (int i = 0; i < gradesCount; ++i) {
+		this->grades[i] = grades[i];
 	}
 
-	catch (string err)
-	{
+	cout << "Called constructor with parameters for Student: " << this << "\n";
+}
 
-		cout << "ERROR: " + err << endl; setError(true);
+Student::Student(const Student& other) : surname(other.surname), gradesCount(other.gradesCount) {
+	grades = new float[gradesCount];
+	for (int i = 0; i < gradesCount; ++i) {
+		grades[i] = other.grades[i];
+	}
+
+	cout << "Called copy constructor for Student: " << this << "\n";
+}
+
+Student::~Student() {
+	cout << "Called destructor for Student: " << this << "\n";
+	delete[] grades;
+}
+
+string Student::getSurname() const {
+	return surname;
+}
+
+void Student::setSurname(const string& surname) {
+	this->surname = surname;
+}
+
+void Student::setGrades(const float* grades, int gradesCount) {
+	if (gradesCount <= 0) {
+		throw StudentException("The number of grades must be positive!");
+	}
+
+	delete[] this->grades;
+	this->gradesCount = gradesCount;
+	this->grades = new float[gradesCount];
+	for (int i = 0; i < gradesCount; ++i) {
+		this->grades[i] = grades[i];
 	}
 }
 
-
-
-Student::Student(ifstream& fin)
-{
-
-	setType(1);
-	fin >> this->year
-		>> this->group
-		>> this->score;
-
-	fin.ignore(256, '\n');
-	getline(fin, name);
-	getline(fin, surename);
-	getline(fin, patronim);
-	getline(fin, specialtyName);
+void Student::getGrades() const {
+	for (int i = 0; i < gradesCount; ++i) {
+		cout << grades[i] << " ";
+	}
+	cout << endl;
 }
 
+double Student::getAverageGrade() const {
+	if (gradesCount == 0) return 0.0;
 
+	float sum = 0;
+	for (int i = 0; i < gradesCount; ++i) {
+		sum += grades[i];
+	}
 
-Student::~Student()
-{
-
-	cout << "Destructor" << endl;
-	system("pause");
+	return static_cast<double>(sum) / gradesCount;
 }
 
+ostream& operator<<(ostream& out, const Student& student) {
+	out << "Last name and initials: " << student.surname << "\n";
+	out << "Ratings: ";
+	for (int i = 0; i < student.gradesCount; ++i) {
+		out << student.grades[i] << " ";
+	}
+	out << "\nAverage grade: " << student.getAverageGrade() << "\n";
+	return out;
+}
 
+istream& operator>>(istream& in, Student& student) {
+	cout << "Enter last name and initials: ";
+	getline(in, student.surname);
 
-void Student::edit()
-{
+	cout << "Enter number of grades:";
+	in >> student.gradesCount;
 
+	if (in.fail() || student.gradesCount <= 0) {
+		in.clear();
+		in.ignore(numeric_limits<streamsize>::max(), '\n');
+		throw InputException("Error: invalid number of grades!");
+	}
 
-	try
-	{
-		int index;
-		int iTmp;
-		string sTmp;
-		cout << "Select a parameter to change" << endl
-			<< "1 - name" << endl
-			<< "2 - last name" << endl
-			<< "3 - middle name" << endl
+	delete[] student.grades;
+	student.grades = new float[student.gradesCount];
 
-			<< "4 - Specialty" << endl
-			<< "5 - Year of study" << endl
-			<< "6 - GPA" << endl
-			<< " "; cin >> index;
-		if (index < 1 || index > 6)
-		{
-
-			throw (string)"No such parameter";
+	cout << "Enter grades separated by spaces: ";
+	for (int i = 0; i < student.gradesCount; ++i) {
+		in >> student.grades[i];
+		if (in.fail()) {
+			in.clear();
+			in.ignore(numeric_limits<streamsize>::max(), '\n');
+			throw InputException("Error entering grades!");
 		}
-
-		cout << "Current value: ";
-		switch (index)
-		{
-		case 1:
-
-			cout << name << endl;
-			cout << "New value: ";
-			cin.ignore(256, '\n');
-			getline(cin, sTmp);
-			name = sTmp;
-			break;
-
-		case 2:
-			cout << surename << endl;
-			cout << "New value: ";
-			cin.ignore(256, '\n');
-			getline(cin, sTmp);
-			surename = sTmp;
-			break;
-		case 3:
-
-			cout << patronim << endl;
-			cout << "New value: ";
-			cin.ignore(256, '\n');
-			getline(cin, sTmp);
-			patronim = sTmp;
-			break;
-
-		case 4:
-
-			cout << specialtyName << endl;
-			cout << "New value: ";
-			cin.ignore(256, '\n');
-			getline(cin, sTmp);
-			specialtyName = sTmp;
-			break;
-		case 5:
-
-			cout << year << endl;
-			cout << "New value: ";
-			cin >> iTmp;
-
-			year = iTmp;
-			break;
-
-		case 6:
-			cout << score << endl;
-			cout << "New value: ";
-			cin >> iTmp;
-
-			score = iTmp;
-			break;
-
-
-		default:
-			break;
-
-		}
-		setError(false);
 	}
 
-	catch (string err)
-	{
-
-		cout << "ERROR: " + err << endl; setError(true);
-	}
-}
-
-
-
-void Student::save(ofstream& fout)
-{
-
-	fout << getType() << endl
-		<< this->year << endl
-		<< this->group << endl
-		<< this->score << endl
-		<< this->name << endl
-		<< this->surename << endl
-		<< this->patronim << endl
-		<< this->specialtyName << endl;
-}
-
-void Student::print(ostream& out)
-{
-
-	out << "Student" << endl
-		<< "Full name " << surename << " " << name << " " << patronim << endl
-		<< "Specialty: " << specialtyName << endl
-		<< "Group: " << group << endl
-		<< "Course: " << year << endl
-		<< "Average score: " << score << endl;
+	in.ignore(numeric_limits<streamsize>::max(), '\n');
+	return in;
 }
